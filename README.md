@@ -24,7 +24,7 @@
   </p>
   <p align="center">(* equal contribution)</p>
   <h3 align="center">
-    <a href="#">Paper (TBD)</a> | <a href="https://huggingface.co/datasets/Tera-AI/STRIDE-1">Dataset</a>
+    <a href="#">Paper (TBD)</a> | <a href="https://huggingface.co/datasets/Tera-AI/STRIDE">Dataset</a>
   </h3>
 </p>
 
@@ -57,6 +57,12 @@ gsutil -m cp gs://tera-tardis/STRIDE-1/training.jsonl . # ~327GB
 gsutil -m cp gs://tera-tardis/STRIDE-1/testing.jsonl . # ~9GB
 ```
 
+## Weights
+The checkpoint/state used for evaluation of the model was saved in MessagePack format and is made available through this downloadable file:
+```bash
+gsutil -m cp gs://tera-tardis/STRIDE-1/checkpoint.msgpack . # ~10GB
+```
+
 ## Training
 
 ### Single VM
@@ -82,13 +88,6 @@ python -m EasyLM.models.llama.convert_easylm_to_hf \
 ```
 
 For a more detailed breakdown of eval, please see [this notebook](eval.ipynb)
-
-
-## Weights
-The checkpoint/state used for evaluation of the model was saved in MessagePack format and is made available through this downloadable file:
-```bash
-gsutil -m cp gs://tera-tardis/STRIDE-1/checkpoint.msgpack . # ~10GB
-```
 
 ## Safeguards
 The dataset itself consists of Google StreetView data which has been thoroughly cleansed and blurred to protect the privacy of citizens, and is free of any ill-intent, nudity and sensitive information. For more information, refer to [their policy](https://www.google.com/streetview/policy/).

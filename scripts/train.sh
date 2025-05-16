@@ -1,0 +1,39 @@
+experiment_name=tardis_1b_multimodal_weight_auto_with_special
+
+export WANDB_NAME=$experiment_name
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+
+python -m EasyLM.models.llama.llama_train \
+    --dtype=bf16 \
+    --total_steps=65250 \
+    --log_freq=100 \
+    --save_model_freq=1000 \
+    --save_milestone_freq=2000 \
+    --load_llama_config=vqlm_1b \
+    --optimizer.type=adamw \
+    --optimizer.adamw_optimizer.weight_decay=0 \
+    --optimizer.adamw_optimizer.lr=1.5e-4 \
+    --optimizer.adamw_optimizer.end_lr=3e-5 \
+    --optimizer.adamw_optimizer.lr_warmup_steps=3000 \
+    --optimizer.adamw_optimizer.lr_decay_steps=10000 \
+    --optimizer.accumulate_gradient_steps=64 \
+    --train_dataset.text_processor.fields='{tokens}' \
+    --train_dataset.type=json \
+    --train_dataset.json_dataset.path="<path to your training dataset>" \
+    --train_dataset.json_dataset.seq_length=16384 \
+    --train_dataset.json_dataset.batch_size=16 \
+    --train_dataset.json_dataset.tokenizer_processes=16 \
+    --eval_steps=100 \
+    --total_eval_steps=5 \
+    --eval_dataset.text_processor.fields='{tokens}' \
+    --eval_dataset.type=json \
+    --eval_dataset.json_dataset.path="<path to your testing dataset>" \
+    --eval_dataset.json_dataset.seq_length=16384 \
+    --eval_dataset.json_dataset.batch_size=16 \
+    --eval_dataset.json_dataset.tokenizer_processes=16 \
+    --checkpointer.save_optimizer_state=True \
+    --logger.online=True \
+    --logger.project="" \
+    --logger.output_dir="<path to your output dir>" \
+    --logger.wandb_dir="<path to your wandb dir>" \
+    --logger.notes="$experiment_name"

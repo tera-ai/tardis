@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-name
+spec:
+  # NOTE: clusterIP must be None to create a headless service
+  clusterIP: None
+  selector:
+    # NOTE: must match Job name
+    job-name: world-model-training-job

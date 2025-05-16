@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-name
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+      - name: world-model-worker
+        resources:
+          limits:
+          # TODO: change this
+            nvidia.com/gpu: 1

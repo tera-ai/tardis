@@ -1,0 +1,88 @@
+namespace: default
+
+resources:
+- job.yaml
+- service.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- path: job-patch.yaml
+# TODO: /spec/completions should be changed to the number of workers desired
+# TODO: /spec/template/spec/nodeSelector should be changed to the desired accelerator (i.e. nvidia-tesla-a100 or nvidia-a100-80gb)
+- patch: |-
+    - op: replace
+      path: /spec/completions
+      value: 2
+    - op: replace
+      path: /metadata/name
+      value: world-model-training-job
+    - op: add 
+      path: /spec/template/spec/nodeSelector
+      value: 
+         cloud.google.com/gke-accelerator: 
+           nvidia-a100-80gb
+  target:
+    kind: Job
+    version: v1
+
+images:
+- name: "<your artifact registry image path here>"
+  newName: "<your artifact registry image path here>"
+  newTag: latest
+
+replacements:
+- source:
+    kind: Job
+    version: v1
+  targets:
+  - select:
+      kind: Service
+      version: v1
+    fieldPaths:
+    - spec.selector.job-name
+  - select:
+      kind: Job
+      version: v1
+    fieldPaths:
+    # NOTE: Refers to job_name (set to "world-model-training-job")
+    - spec.template.spec.containers.[name=world-model-worker].args.3 
+- source:
+    kind: Job
+    version: v1
+    fieldPath: spec.template.spec.subdomain
+  targets:
+  - select:
+      kind: Service
+      version: v1
+    fieldPaths:
+    - metadata.name
+  - select:
+      kind: Job
+      version: v1
+    fieldPaths:
+    # NOTE: Refers to sub_domain (set to "headless-svc")
+    - spec.template.spec.containers.[name=world-model-worker].args.5 
+- source:
+    kind: Job
+    version: v1
+    fieldPath: spec.completions
+  targets:
+  - select: 
+      kind: Job
+      version: v1
+    fieldPaths:
+    # NOTE: Refers to num_processes (set to a number like "32")
+    - spec.template.spec.containers.[name=world-model-worker].args.1
+    - spec.parallelism
+- source:
+    kind: Job
+    version: v1
+    fieldPath: spec.template.spec.containers.[name=world-model-worker].ports.0.containerPort
+  targets:
+  - select: 
+      kind: Job
+      version: v1
+    fieldPaths:
+    # NOTE: Refers to coordinator_port (set to "1234")
+    - spec.template.spec.containers.[name=world-model-worker].args.7

@@ -1,0 +1,127 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # NOTE: Below WILL_BE_REPLACED (by Kustomization)
+  name: job-name
+spec:
+  # NOTE: Below WILL_BE_REPLACED (by Kustomization)
+  completions: 1
+  # NOTE: Below WILL_BE_REPLACED (by Kustomization)
+  parallelism: 1
+  completionMode: Indexed
+  backoffLimit: 1
+  template:
+    spec:
+      # NOTE: Field nodeSelector WILL_BE_ADDED with "cloud.google.com/gke-accelerator=nvidia-a100-80gb" (by Kustomization)
+      subdomain: headless-svc
+      restartPolicy: Never
+      containers:
+      - name: world-model-worker
+        image: "<your artifact registry image path here>"
+        command: [
+          "python3",
+          "-m",
+          "EasyLM.models.llama.llama_train",
+          # NOTE: let the code know it's running in a Kubernetes Job context
+          "--kubernetes",
+        ]
+        args:
+        - --jax_distributed.num_processes
+        - WILL_BE_REPLACED
+        - --job_name
+        - WILL_BE_REPLACED
+        - --sub_domain
+        - WILL_BE_REPLACED
+        - --coordinator_port
+        - WILL_BE_REPLACED
+        - --eval_steps
+        - "100"
+        - --total_eval_steps
+        - "5"
+        - --jax_distributed.initialize_jax_distributed
+        - "True"
+        - --jax_distributed.local_device_ids
+        - "0,1,2,3,4,5,6,7"
+        - --mesh_dim
+        - "1,2,-1"
+        - --dtype
+        - fp32
+        - --total_steps
+        - "10000"
+        - --log_freq
+        - "100"
+        - --save_model_freq
+        - "10000"
+        - --save_milestone_freq
+        - "10000"
+        - --load_llama_config
+        - vqlm_language_base
+        - --optimizer.type
+        - adamw
+        - --optimizer.adamw_optimizer.weight_decay
+        - "0"
+        - --optimizer.adamw_optimizer.lr
+        - "4e-4"
+        - --optimizer.adamw_optimizer.end_lr
+        - "4e-5"
+        - --optimizer.adamw_optimizer.lr_warmup_steps
+        - "400"
+        - --optimizer.adamw_optimizer.lr_decay_steps
+        - "7000"
+        - --optimizer.accumulate_gradient_steps
+        - "8"
+        - --train_dataset.json_dataset.path
+        - "<your gcs bucket path here>"
+        - --train_dataset.text_processor.fields
+        - '{tokens}'
+        - --train_dataset.type
+        - json
+        - --train_dataset.json_dataset.seq_length
+        - "2048"
+        - --train_dataset.json_dataset.batch_size
+        - "16"
+        - --train_dataset.json_dataset.tokenizer_processes
+        - "16"
+        - --eval_dataset.json_dataset.path
+        - "<your gcs bucket path here>"
+        - --eval_dataset.text_processor.fields
+        - '{tokens}'
+        - --eval_dataset.type
+        - json
+        - --eval_dataset.json_dataset.seq_length
+        - "2048"
+        - --eval_dataset.json_dataset.batch_size
+        - "16"
+        - --eval_dataset.json_dataset.tokenizer_processes
+        - "16"
+        - --checkpointer.save_optimizer_state
+        - "True"
+        - --logger.output_dir
+        - "<your gcs bucket path here>"
+        - --logger.online
+        - "True"
+        - --logger.project
+        - ''
+        - --logger.wandb_dir
+        - "<your gcs bucket path here>"
+        - --logger.notes
+        - ''
+        ports:
+        - containerPort: 1234
+        env:
+        - name: WANDB_API_KEY
+          value: "<your wandb api key here>"
+        - name: JAX_PLATFORMS
+          value: cuda
+        - name: XLA_FLAGS
+          value: "--xla_gpu_cuda_data_dir=/usr/local/cuda"
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0,1,2,3,4,5,6,7"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/cuda/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64"
+        - name: WANDB_NAME
+          value: "<your wandb name here>"
+        - name: GOOGLE_CLOUD_PROJECT
+          value: "<your gcp project id here>"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: ~/.config/gcloud/application_default_credentials.json
